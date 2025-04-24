@@ -1,45 +1,115 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
+import { StatusBar } from "expo-status-bar";
+import { Redirect, Tabs } from "expo-router";
+import { Text, View, StyleSheet } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import Loader from "@/components/Loader";
+import { ApiContext } from "@/context/ApiContext";
+import { useContext } from "react";
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+interface TabIconProps {
+  name: string;
+  icon: keyof typeof MaterialIcons.glyphMap;
+  color: string;
+  focused: boolean;
+}
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+const TabIcon = ({ name, icon, color, focused }: TabIconProps) => {
+  return (
+    <View style={styles.iconContainer}>
+      <View style={{ backgroundColor: focused ? "#ffc0cb66" : "transparent", borderRadius: 15, width: 50, alignItems: "center" }}>
+        <MaterialIcons name={icon} size={24} color={color} />
+      </View>
+      <Text style={[styles.iconText, { color, fontWeight: focused ? "600" : "400" }]}>
+        {name.charAt(0).toUpperCase() + name.slice(1)}
+      </Text>
+    </View>
+  );
+};
+
+const TabLayout = () => {
+  const apiContext = useContext(ApiContext);
+  if (!apiContext) {throw Error};
+
+  const { loading, isLoggedIn } = apiContext;
+
+  if (!loading && !isLoggedIn) return <Redirect href="/login" />;
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+    <>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: styles.tabActiveColor.color,
+          tabBarInactiveTintColor: styles.tabInactiveColor.color,
+          tabBarShowLabel: false,
+          tabBarStyle: styles.tabBar,
+          tabBarHideOnKeyboard: true,
         }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="home"
+          options={{
+            title: "Home",
+            headerShown: false,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon name="home" icon="home" color={color} focused={focused} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="assessment"
+          options={{
+            title: "assessment",
+            headerShown: false,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon name="assessments" icon="assessment" color={color} focused={focused} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            headerShown: false,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon name="profile" icon="person" color={color} focused={focused} />
+            ),
+          }}
+        />
+      </Tabs>
+      <Loader loading={loading} />
+      {/* <StatusBar backgroundColor="#161622" style="light" /> */}
+    </>
   );
-}
+};
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconText: {
+    fontSize: 12,
+    textAlign: "center",
+    width: 68,
+  },
+  tabBar: {
+    // backgroundColor: "#161622",
+    backgroundColor: "black",
+    borderTopWidth: 6,
+    borderColor: "black",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    height: 50,
+  },
+
+  tabActiveColor: {
+    // color: "#FFA001",
+    color: "pink",
+  },
+  tabInactiveColor: {
+    color: "#CDCDE0",
+  },
+});
+
+export default TabLayout;

@@ -1,39 +1,58 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { SplashScreen, Stack } from "expo-router";
+import { StatusBar } from "react-native";
+import { ApiProvider } from "@/context/ApiContext";
+import { useFonts } from "expo-font";
+import { useEffect } from "react";
+import { Provider as PaperProvider } from "react-native-paper";
+import { colors } from "@/styles/global";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+
+const RootLayout = () => {
+
+  const [fontsLoaded, error] = useFonts({
+    "Montserrat": require("../assets/fonts/Montserrat/Montserrat-VariableFont_wght.ttf"),
+    "Montserrat_Bold": require("../assets/fonts/Montserrat/static/Montserrat-SemiBold.ttf"),
+    "Playwrite_DE_LA": require("../assets/fonts/Playwrite_DE_LA/PlaywriteDELA-VariableFont_wght.ttf"),
+    "Roboto": require("../assets/fonts/Roboto/static/Roboto-Regular.ttf"),
   });
 
   useEffect(() => {
-    if (loaded) {
+    if (error) throw error;
+
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [fontsLoaded, error]);
 
-  if (!loaded) {
-    return null;
-  }
+  if (!fontsLoaded && !error) return null;
+
+  
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+    <ApiProvider>
+      <PaperProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        {/* <Stack.Screen name="index" /> */}
+        {/* <Stack.Screen name="login" />
+        <Stack.Screen name="register" /> */}
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="home" />
+        <Stack.Screen name="chat" />
+
+        <Stack.Screen name="assessment" />
+        
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+      </PaperProvider>
+      {/* <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent /> */}
+            {/* <StatusBar backgroundColor="#161622" style="light" /> */}
+      <StatusBar barStyle="light-content" backgroundColor={colors.headerBgColor} />
+      
+    </ApiProvider>
   );
-}
+};
+
+export default RootLayout;
