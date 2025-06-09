@@ -13,14 +13,17 @@ import Loader from "@/components/Loader";
 import { MaterialIcons } from "@expo/vector-icons";
 import { ProgressBar } from "react-native-paper";
 
+
+type QuestionType = 'mcq' | 'msq' | 'text' | 'star';
+
 interface Question {
   id: string;
   qid: string;
   text: string;
-  type: string;
+  type: QuestionType;
   tag?: string;
+  starCount?: number; // for rating questions
   optional?: boolean;
-  noscore?: boolean;
   next?: string | null;
   options?: Array<{
     id: string;
@@ -34,7 +37,7 @@ interface Question {
 }
 
 interface Assessment {
-  id: string;
+  code: string;
   name: string;
   description: string;
   questions: Question[];
@@ -52,22 +55,22 @@ const AssessmentComponent = ({
     throw new Error("Login must be used within an ApiProvider");
   }
 
-  const { baseUrl, token, loading, setLoading } = apiContext;
-  const onSubmitEndpoint = `${baseUrl}assessments/api/submit/`;
+  const { baseUrl, token, loading, setLoading, setStatus } = apiContext;
+  const onSubmitEndpoint = `${baseUrl}assessments/v2/api/submit/`;
 
   const [index, setIndex] = useState(idx);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
-  const [assessmentId, setAssessmentId] = useState<string | null>(null);
+  const [assessmentCode, setAssessmentCode] = useState<string | null>(null);
   const [name, setAssessmentName] = useState<string | null>(null);
   const [description, setAssessmentDescription] = useState<string | null>(null);
   const [questions, setAssessmentQuestions] = useState<Question[]>([]);
 
   const [currentQuestionId, setCurrentQuestionId] = useState<string>("");
-  const [answer, setAnswer] = useState<string | null>(null);
+  const [answer, setAnswer] = useState<string | number | null>(null);
   const [responses, setResponses] = useState<Record<string, any>>({});
   const [questionsStack, setQuestionsStack] = useState<string[]>([]);
 
-  const [nextAssessmentPopup, setNextAssessmentPopup] = useState(false);
+  const [nextAssessmentPopup, setNextAssessmentPopup] = useState(true);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -125,7 +128,7 @@ const AssessmentComponent = ({
     }
 
     setAssessment(assessments[index]);
-    setAssessmentId(assessments[index].id);
+    setAssessmentCode(assessments[index].code);
     setAssessmentName(assessments[index].name);
     setAssessmentDescription(assessments[index].description);
     setAssessmentQuestions(assessments[index].questions);
@@ -134,6 +137,8 @@ const AssessmentComponent = ({
     setQuestionsStack([assessments[index].questions[0].id]);
     setResponses({});
     setAnswer(null);
+
+    console.log("Assessment loaded:", assessments[index].name, index);
   }, [index]);
 
   useEffect(() => {
@@ -207,7 +212,7 @@ const AssessmentComponent = ({
       return {
         ...prev,
         [question.id]: {
-          qid: question.id,
+          qid: question.qid,
           opid: option.id,
           value: option.value,
           type: question.type,
@@ -262,7 +267,7 @@ const AssessmentComponent = ({
       return {
         ...prev,
         [question.id]: {
-          qid: question.id,
+          qid: question.qid,
           value: updatedValues,
           type: question.type,
           tag: question.tag,
@@ -271,32 +276,96 @@ const AssessmentComponent = ({
     });
   };
 
-  const handleTextAnswer = (
-    question: Question | undefined,
-    text: React.SetStateAction<string | null>
-  ) => {
-    if (!question) return;
+  // const handleTextAnswer = (
+  //   question: Question | undefined,
+  //   text: React.SetStateAction<string | null>
+  // ) => {
+  //   if (!question) return;
 
-    setResponses((prev) => ({
-      ...prev,
-      [question.id]: {
-        value: text,
-        type: question.type,
-        tag: question.tag,
+  //   setResponses((prev) => ({
+  //     ...prev,
+  //     [question.id]: {
+  //       value: text,
+  //       type: question.type,
+  //       tag: question.tag,
+  //     },
+  //   }));
+  //   setAnswer(text);
+  // };
+
+  const submitResponses = async (finalResponses: Record<string, any>) => {
+
+    console.log("Old schema responses:", finalResponses);
+
+    // 🔁 Transform responses from old schema to new compact schema
+    const transformedResponses = Object.entries(finalResponses).reduce(
+      (acc, [key, value]) => {
+        const { qid, type, value: originalValue, score, tag, opid } = value;
+
+        let answer: any;
+        let optionScoreSum: number | null = null;
+
+        if (type === "text") {
+          answer = {
+            text: originalValue,
+          };
+        } else if (type === "star") {
+          answer = {
+            rating: originalValue,
+          };
+        } else {
+          const selectedOptions = Array.isArray(originalValue)
+            ? originalValue.map((opt) => ({
+                opt_id: opt.id,
+                value: opt.value,
+                score: opt.score ?? null,
+              }))
+            : [
+                {
+                  opt_id: opid ?? "unknown",
+                  value: originalValue,
+                  score: score ?? null,
+                },
+              ];
+
+          // 🧮 Calculate total score if any of the selected options have scores
+          const scores = selectedOptions
+            .map((opt) => opt.score)
+            .filter((s) => typeof s === "number");
+          optionScoreSum = scores.length
+            ? scores.reduce((a, b) => a + (b ?? 0), 0)
+            : null;
+
+          answer = {
+            options: selectedOptions,
+          };
+        }
+
+        acc[key] = {
+          q_id: qid,
+          type,
+          answer,
+          meta: {
+            opt_id: opid ?? null,
+            score: optionScoreSum,
+            tag: tag ?? null,
+          },
+        };
+
+        return acc;
       },
-    }));
-    setAnswer(text);
-  };
+      {} as Record<string, any>
+    );
 
-  const submitResponses = async (finalResponses: {}) => {
     console.log("submitting");
     setLoading(true);
     const payload = {
-      assessment_id: assessmentId,
-      responses: finalResponses,
+      assess_code: assessmentCode,
+      responses: transformedResponses,
     };
+
     try {
-      const response = await fetch(onSubmitEndpoint, {
+      const response = await fetch(`${onSubmitEndpoint}${assessmentCode}/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -317,10 +386,11 @@ const AssessmentComponent = ({
       Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
-      Alert.alert("Payload", JSON.stringify(payload));
+      // Alert.alert("Payload", JSON.stringify(payload));
       console.log("Payload:", payload);
 
-      setNextAssessmentPopup(true); //////////////////////// MOVE TO after response ok
+      setNextAssessmentPopup(true);
+      setIndex(index + 1);
     }
   };
 
@@ -349,7 +419,7 @@ const AssessmentComponent = ({
   };
 
   const navigateNext = () => {
-    if (currentQuestion?.type === "text") {
+    if (currentQuestion?.type === "text" || currentQuestion?.type === "star") {
       const updatedResponses = {
         ...responses,
         [currentQuestion.id]: {
@@ -386,11 +456,56 @@ const AssessmentComponent = ({
     }
   };
 
+  const getIconColor = (question: Question, option: any): string => {
+    const res = responses[question.id];
+    if (question.type === "mcq") {
+      return res?.value === option.value ? "#fff" : colors.pink;
+    } else if (question.type === "msq") {
+      return res?.value?.some((opt: any) => opt.id === option.id)
+        ? "#fff"
+        : colors.pink;
+    }
+    return colors.pink;
+  };
+  
+
   return (
     <View style={styles.container}>
       <Loader loading={loading} />
 
-      {nextAssessmentPopup && index + 1 < assessments.length && (
+      {nextAssessmentPopup && index === 0 && (
+        <View style={styles.popup}>
+          <View style={styles.popupContent}>
+            <View style={{ margin: 10 }}>
+              <MaterialIcons
+                name="fact-check"
+                size={70}
+                color={colors.pink}
+              />
+            </View>
+            <Text style={{ fontSize: 22, color: colors.pink }}>
+              Form assessments
+            </Text>
+            <Text style={{ fontSize: 18, color: "#666", padding: 10 }}>
+              Please complete the next {assessments.length} assessments before exiting
+            </Text>
+            <TouchableOpacity
+              onPress={() => setNextAssessmentPopup(false)}
+              style={{
+                backgroundColor: colors.pink,
+                paddingHorizontal: 25,
+                paddingVertical: 12,
+                borderRadius: 25,
+                marginTop: 20,
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 18 }}>Start</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {nextAssessmentPopup && index + 1 < assessments.length && index !== 0  && (
         <View style={styles.popup}>
           <View style={styles.popupContent}>
             <View style={{ margin: 10 }}>
@@ -410,7 +525,7 @@ const AssessmentComponent = ({
             <TouchableOpacity
               onPress={() => {
                 setNextAssessmentPopup(false);
-                setIndex(index + 1);
+                // setIndex(index + 1);
               }}
               style={{
                 backgroundColor: colors.pink,
@@ -428,7 +543,7 @@ const AssessmentComponent = ({
         </View>
       )}
 
-      {nextAssessmentPopup && index + 1 === assessments.length && (
+      {nextAssessmentPopup && index === assessments.length && (
         <View style={styles.popup}>
           <View style={styles.popupContent}>
             <View style={{ margin: 10 }}>
@@ -446,6 +561,8 @@ const AssessmentComponent = ({
             </Text>
             <TouchableOpacity
               onPress={() => {
+                setStatus("chat");
+                setLoading(false);
                 setNextAssessmentPopup(false);
                 router.back();
               }}
@@ -529,6 +646,36 @@ const AssessmentComponent = ({
             <Text style={{ fontSize: 20, color: "#666" }}>
               {currentQuestion.text}
             </Text>
+
+            {currentQuestion.type === "star" && (
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                {[...Array(currentQuestion.starCount || 5)].map((_, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    onPress={() => {
+                      setAnswer(i + 1);
+                      setResponses((prev) => ({
+                        ...prev,
+                        [currentQuestion.id]: {
+                          qid: currentQuestion.qid,
+                          value: i + 1,
+                          type: "star",
+                          tag: currentQuestion.tag,
+                        },
+                      }));
+                    }}
+                  >
+                    <MaterialIcons
+                      name={i < (responses[currentQuestion.id]?.value || 0) ? "star" : "star-border"}
+                      size={32}
+                      color={colors.pink}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+
           </View>
 
           <View>
@@ -544,22 +691,31 @@ const AssessmentComponent = ({
                     }
                     onPress={() => handleMCQAnswer(currentQuestion, option)}
                   >
-                    <Text
-                      style={
-                        responses[currentQuestion.id]?.value === option.value
-                          ? [styles.optionText, styles.optionTextSelected]
-                          : styles.optionText
-                      }
+                    <View
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 10,
+                      }}
                     >
                       {option.icon && (
                         <MaterialIcons
                           name={option.icon as any}
                           size={20}
-                          color={colors.pink}
+                          color={getIconColor(currentQuestion, option)}
                         />
                       )}
-                      {option.label}
-                    </Text>
+                      <Text
+                        style={
+                          responses[currentQuestion.id]?.value === option.value
+                            ? [styles.optionText, styles.optionTextSelected]
+                            : styles.optionText
+                        }
+                      >
+                        {option.label}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -578,24 +734,34 @@ const AssessmentComponent = ({
                     }
                     onPress={() => handleMSQAnswer(currentQuestion, option)}
                   >
-                    <Text
-                      style={
-                        (responses[currentQuestion.id]?.value || []).some(
-                          (opt: { id: string }) => opt.id === option.id
-                        )
-                          ? [styles.optionText, styles.optionTextSelected]
-                          : styles.optionText
-                      }
+                    <View
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 10,
+                      }}
                     >
                       {option.icon && (
                         <MaterialIcons
                           name={option.icon as any}
                           size={20}
-                          color={colors.pink}
+                          color={getIconColor(currentQuestion, option)}
                         />
                       )}
-                      {option.label}
-                    </Text>
+                      <Text
+                        style={
+                          (responses[currentQuestion.id]?.value || []).some(
+                            (opt: { id: string }) => opt.id === option.id
+                          )
+                            ? [styles.optionText, styles.optionTextSelected]
+                            : styles.optionText
+                        }
+                      >
+                        {option.label}
+                      </Text>
+                    </View>
+
                   </TouchableOpacity>
                 ))}
               </View>
@@ -613,6 +779,9 @@ const AssessmentComponent = ({
                 numberOfLines={4}
               />
             )}
+            
+
+
           </View>
 
           <View style={styles.bottomNavigation}>
@@ -639,20 +808,20 @@ const AssessmentComponent = ({
               disabled={answer === null && !currentQuestion.optional}
             >
               <Text style={styles.navBtnText}>
-                {/* if curr question's next is null or selected option's next is null then show 'submit' else show 'next' */}
                 {currentQuestion.next === null ||
-                (currentQuestion.type === "mcq" &&
-                  currentQuestion.options?.some(
-                    (opt) => opt.value === answer && opt.next === null
-                  )) ||
-                (currentQuestion.type === "msq" &&
-                  currentQuestion.options?.some((opt) =>
-                    (responses[currentQuestion.id]?.value || []).some(
-                      (v: any) => v.id === opt.id && opt.next === null
-                    )
-                  ))
-                  ? "Submit"
-                  : "Next"}
+                  (currentQuestion.type === "mcq" &&
+                    currentQuestion.options?.some(
+                      (opt) => opt.value === answer && opt.next === null
+                    )) ||
+                  (currentQuestion.type === "msq" &&
+                    currentQuestion.options?.some((opt) =>
+                      (responses[currentQuestion.id]?.value || []).some(
+                        (v: any) => v.id === opt.id && opt.next === null
+                      )
+                    )) ||
+                  (currentQuestion.type === "star" && currentQuestion.next === null)
+                    ? "Submit"
+                    : "Next"}
               </Text>
               <MaterialIcons name="arrow-forward" size={20} color="#fff" />
             </TouchableOpacity>
@@ -699,6 +868,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "column",
     gap: 20,
+    marginTop: 40,
   },
   questionText: {
     fontSize: 20,
@@ -718,12 +888,21 @@ const styles = StyleSheet.create({
   optionText: {
     color: "#000",
     fontSize: 16,
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   optionButtonSelected: {
     backgroundColor: colors.pink,
   },
   optionTextSelected: {
     color: "#fff",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    fontSize: 16,
   },
   navBtn: {
     backgroundColor: colors.pink,

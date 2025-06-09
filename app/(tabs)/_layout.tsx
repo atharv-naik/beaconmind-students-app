@@ -13,26 +13,35 @@ interface TabIconProps {
   focused: boolean;
 }
 
-const TabIcon = ({ name, icon, color, focused }: TabIconProps) => {
-  return (
-    <View style={styles.iconContainer}>
-      <View style={{ backgroundColor: focused ? "#ffc0cb66" : "transparent", borderRadius: 15, width: 50, alignItems: "center" }}>
-        <MaterialIcons name={icon} size={24} color={color} />
-      </View>
-      <Text style={[styles.iconText, { color, fontWeight: focused ? "600" : "400" }]}>
-        {name.charAt(0).toUpperCase() + name.slice(1)}
-      </Text>
+const TabIcon = ({ name, icon, color, focused }: TabIconProps) => (
+  <View style={styles.iconContainer}>
+    <View
+      style={{
+        backgroundColor: focused ? "#ffc0cb66" : "transparent",
+        borderRadius: 15,
+        width: 50,
+        alignItems: "center",
+      }}
+    >
+      <MaterialIcons name={icon} size={24} color={color} />
     </View>
-  );
-};
+    <Text style={[styles.iconText, { color, fontWeight: focused ? "600" : "400" }]}>
+      {name.charAt(0).toUpperCase() + name.slice(1)}
+    </Text>
+  </View>
+);
 
 const TabLayout = () => {
   const apiContext = useContext(ApiContext);
-  if (!apiContext) {throw Error};
+  if (!apiContext) {
+    throw new Error("ApiContext is undefined. Ensure ApiProvider wraps your app.");
+  }
 
-  const { loading, isLoggedIn } = apiContext;
+  const { loading, isLoggedIn, user } = apiContext;
 
-  if (!loading && !isLoggedIn) return <Redirect href="/login" />;
+  if (loading) return <Loader loading={true} />;
+
+  if (!isLoggedIn) return <Redirect href="/login" />;
 
   return (
     <>
@@ -55,16 +64,7 @@ const TabLayout = () => {
             ),
           }}
         />
-        <Tabs.Screen
-          name="assessment"
-          options={{
-            title: "assessment",
-            headerShown: false,
-            tabBarIcon: ({ color, focused }) => (
-              <TabIcon name="assessments" icon="assessment" color={color} focused={focused} />
-            ),
-          }}
-        />
+        {/* Add other tabs as needed */}
         <Tabs.Screen
           name="profile"
           options={{
@@ -76,8 +76,7 @@ const TabLayout = () => {
           }}
         />
       </Tabs>
-      <Loader loading={loading} />
-      {/* <StatusBar backgroundColor="#161622" style="light" /> */}
+      <StatusBar style="light" backgroundColor="black" />
     </>
   );
 };
@@ -93,18 +92,14 @@ const styles = StyleSheet.create({
     width: 68,
   },
   tabBar: {
-    // backgroundColor: "#161622",
     backgroundColor: "black",
     borderTopWidth: 6,
     borderColor: "black",
-    display: "flex",
     flexDirection: "row",
     justifyContent: "space-around",
     height: 50,
   },
-
   tabActiveColor: {
-    // color: "#FFA001",
     color: "pink",
   },
   tabInactiveColor: {

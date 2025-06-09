@@ -40,10 +40,14 @@ const RootLayout = () => {
         {/* <Stack.Screen name="login" />
         <Stack.Screen name="register" /> */}
         <Stack.Screen name="(auth)" />
-        <Stack.Screen name="home" />
+        {/* <Stack.Screen name="home" /> */}
         <Stack.Screen name="chat" />
 
+          {/* TODO: REMOVE LATER */}
+        {/* <Stack.Screen name="profile-setup" /> */}
+
         <Stack.Screen name="assessment" />
+
         
       </Stack>
       </PaperProvider>

@@ -39,33 +39,40 @@ const Register = () => {
   const [passwordStrength, setPasswordStrength] = useState("");
   const [showDisclaimer, setShowDisclaimer] = useState(false);
 
-  const disclaimer = `
-  # Terms & Conditions
-
-_Last updated: March 7, 2025_
-
-## 1. Introduction
-Welcome to **[Your App Name]**. By using our app, you agree to these Terms & Conditions. If you do not agree, please do not use the app.
-
-## 2. Disclaimer
-- The content provided in this app is for informational purposes only.
-- We do not guarantee the accuracy, completeness, or reliability of any information.
-- Your use of this app is at your own risk.
-
-## 3. Limitation of Liability
-- We are not liable for any damages arising from your use of this app.
-- This includes, but is not limited to, loss of data, revenue, or business opportunities.
-
-## 4. User Responsibilities
-- You agree to use this app lawfully and ethically.
-- You must not misuse, hack, or attempt to disrupt the service.
-
-## 5. Changes to These Terms
-We may update these Terms & Conditions at any time. Continued use of the app after changes means you accept the new terms.
-
-## 6. Contact Us
-If you have any questions, please contact us at **[your@email.com]**.
-`;
+  const consentForm = `
+  # Informed Consent
+  
+  _Last updated: May 9, 2025_
+  
+  ## Study Title
+  **Developing and Testing the Acceptability of AI-Integrated Virtual Assistant "CONNECT2CARE" for Mental Health Assessment of College Students**
+  
+  ## 1. Purpose of the Study
+  You are being invited to participate in a research study that involves using the "CONNECT2CARE" virtual assistant for mental health assessment. The goal is to understand its usability and effectiveness for college students.
+  
+  ## 2. Voluntary Participation
+  Your participation is completely voluntary. You are free to withdraw from the study at any time without giving a reason. This will not affect your medical care or legal rights in any way.
+  
+  ## 3. Confidentiality
+  All personal information and responses will be kept strictly confidential. Only authorized individuals such as the Principal Investigator, the ethics committee of the institution, and regulatory authorities may access your health records for the purposes of this study or related future research. Your identity will not be revealed in any public results or reports.
+  
+  ## 4. Data Usage
+  By continuing, you agree not to place any restrictions on the use of data or results obtained from this study. The data may be used for research purposes now and in the future, even if you choose to withdraw later.
+  
+  ## 5. Consent
+  By registering and using this app, you confirm that:
+  - You have read and understood the information provided.
+  - You voluntarily agree to take part in this study.
+  - You accept the terms described above and provide your consent.
+  
+  ## 6. Contact Information
+  If you have any questions about this study, please contact the study doctor or research team.
+  
+  ---
+  
+  By proceeding, you acknowledge and agree to the above terms of participation.
+  `;
+  
 
   const handleInputChange = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
@@ -85,15 +92,15 @@ If you have any questions, please contact us at **[your@email.com]**.
 
   const passwordValidator = (password: string) => {
     if (password.length < 8) {
-      setPasswordStrength("Weak");
+      setPasswordStrength("Too short");
       setPasswordValidationError("Password must be at least 8 characters.");
-    } else if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-      setPasswordStrength("Moderate");
-      setPasswordValidationError(
-        "Password must include at least one uppercase letter and one number."
-      );
+    // } else if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+    //   setPasswordStrength("Moderate");
+    //   setPasswordValidationError(
+    //     "Password must include at least one uppercase letter and one number."
+    //   );
     } else {
-      setPasswordStrength("Strong");
+      setPasswordStrength("OK");
       setPasswordValidationError("");
     }
   };
@@ -138,7 +145,7 @@ If you have any questions, please contact us at **[your@email.com]**.
       const response = await fetch(`${authUrl}register/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, role: "patient" }),
+        body: JSON.stringify({ ...formData, role: "student" }),
       });
 
       if (response.ok) {
@@ -154,6 +161,7 @@ If you have any questions, please contact us at **[your@email.com]**.
       Alert.alert("Error", "Error registering.");
     } finally {
       setLoading(false);
+      console.log("Registration data:", formData);
     }
   };
 
@@ -217,7 +225,7 @@ If you have any questions, please contact us at **[your@email.com]**.
 
               <ScrollView style={{ maxHeight: 450 }}>
                 <Markdown style={markdownStyles}>
-                    {disclaimer}
+                    {consentForm}
                 </Markdown>
               </ScrollView>
               <TouchableOpacity

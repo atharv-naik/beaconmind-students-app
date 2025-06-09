@@ -4,7 +4,7 @@ import AssessmentComponent from "@/components/AssessmentComponent";
 import {
   allAssessments,
   asqAssessment,
-  whoAssistAssessment,
+  substanceUseAssessment,
   dass21Assessment,
 } from "@/assessmentstore/assessments";
 

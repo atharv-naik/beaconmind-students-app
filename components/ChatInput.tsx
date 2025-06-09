@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { TextInput, TouchableOpacity, Animated, Keyboard } from "react-native";
+import { TextInput, TouchableOpacity, View, Keyboard } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { styles, colors } from "@/styles/global";
 
@@ -12,34 +12,32 @@ interface ChatInputProps {
   isWaitingForResponse: boolean;
 }
 
-const ChatInput = ({ allowInput, focusInput, inputText, setInputText, onPress, isWaitingForResponse }: ChatInputProps) => {
-  const slideAnim = useRef(new Animated.Value(0)).current; // Initially at normal position
-
+const ChatInput = ({
+  allowInput,
+  focusInput,
+  inputText,
+  setInputText,
+  onPress,
+  isWaitingForResponse,
+}: ChatInputProps) => {
   const inputRef = useRef<TextInput | null>(null);
-
 
   useEffect(() => {
     if (!allowInput) {
-        Keyboard.dismiss(); // Hide the keyboard when input slides down
+      Keyboard.dismiss(); // Hide the keyboard when input is disabled
     }
-
-    Animated.timing(slideAnim, {
-      toValue: allowInput ? 0 : 100, // Slide down when allowInput is false
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
   }, [allowInput]);
 
   useEffect(() => {
     if (focusInput && inputRef.current) {
-      // activate the input
       inputRef.current.focus();
     }
-  }
-  , [focusInput]);
+  }, [focusInput]);
+
+  if (!allowInput) return null;
 
   return (
-    <Animated.View style={[styles.inputContainer, { transform: [{ translateY: slideAnim }] }]}>
+    <View style={styles.inputContainer}>
       <TextInput
         ref={inputRef}
         style={styles.textInput}
@@ -50,16 +48,10 @@ const ChatInput = ({ allowInput, focusInput, inputText, setInputText, onPress, i
         numberOfLines={3}
         multiline={true}
       />
-      {!isWaitingForResponse ? (
-        <TouchableOpacity style={styles.sendButton} onPress={() => onPress()}>
-          <MaterialIcons name="arrow-upward" size={20} color="#eee" />
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity style={styles.sendButton} onPress={() => {}}>
-          <MaterialIcons name="stop" size={20} color="#eee" />
-        </TouchableOpacity>
-      )}
-    </Animated.View>
+      <TouchableOpacity style={styles.sendButton} onPress={isWaitingForResponse ? () => {} : onPress}>
+        <MaterialIcons name={isWaitingForResponse ? "stop" : "arrow-upward"} size={20} color="#eee" />
+      </TouchableOpacity>
+    </View>
   );
 };
 

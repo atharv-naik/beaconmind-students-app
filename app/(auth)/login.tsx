@@ -13,20 +13,27 @@ import { authStyles as styles, styles as baseStyles } from "@/styles/global";
 import { ApiContext } from "@/context/ApiContext";
 import { router } from "expo-router";
 import AuthBackground from "@/components/AuthBackground";
+import Loader from "@/components/Loader";
 
 const LoginHeader = () => (
-
-    <View style={baseStyles.fancyTitleWrapper}>
-    <Text style={{...baseStyles.fancyTitle, textAlign: 'center'}}>BeaconMind</Text>
-    </View>
+  <View style={baseStyles.fancyTitleWrapper}>
+    <Text style={{ ...baseStyles.fancyTitle, textAlign: "center" }}>BeaconMind</Text>
+  </View>
 );
 
 type InputFieldProps = {
   icon: React.ComponentProps<typeof MaterialIcons>["name"];
   placeholder: string;
-  keyboardType: "default" | "number-pad" | "decimal-pad" | "numeric" | "email-address" | "phone-pad" | "url";
+  keyboardType:
+    | "default"
+    | "number-pad"
+    | "decimal-pad"
+    | "numeric"
+    | "email-address"
+    | "phone-pad"
+    | "url";
   onChangeText: (text: string) => void;
-}
+};
 
 const InputField = ({ icon, placeholder, keyboardType, onChangeText }: InputFieldProps) => (
   <View style={styles.inputWrapper}>
@@ -97,7 +104,7 @@ const Login = () => {
     throw new Error("Login must be used within an ApiProvider");
   }
 
-  const { authUrl, setToken, loading, setLoading, setIsLoggedIn, setUser } = apiContext;
+  const { authUrl, setToken, loading, setLoading, setIsLoggedIn } = apiContext;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -108,9 +115,9 @@ const Login = () => {
     }
     try {
       setLoading(true);
+
       if (!authUrl) {
         Alert.alert("Error", "Authentication service is unavailable.");
-        setLoading(false);
         return;
       }
 
@@ -122,30 +129,42 @@ const Login = () => {
 
       if (response.ok) {
         const data = await response.json();
+
         await AsyncStorage.setItem("token", data.token);
         await AsyncStorage.setItem("isLoggedIn", "true");
-        setIsLoggedIn(true);
+
         setToken(data.token);
-        router.replace("/home");
-        // Alert.alert("Success", `login successful, token: ${data.token}`);
+        setIsLoggedIn(true);
+
+        router.replace("/");
       } else {
         const data = await response.json();
         Alert.alert("Error", data.detail || "Login failed.");
       }
-    } catch {
+    } catch (error) {
+      console.error("Login error:", error);
       Alert.alert("Error", "Error logging in.");
     } finally {
       setLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ fontSize: 18 }}>Logging in...</Text>
+        <Loader loading={true} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
         <AuthBackground />
-          <LoginHeader />
+        <LoginHeader />
         <View style={styles.authContainer}>
-            <Text style={styles.authTitle}>Login</Text>
+          <Text style={styles.authTitle}>Login</Text>
           <View style={styles.authForm}>
             <InputField
               icon="person"
@@ -155,7 +174,6 @@ const Login = () => {
             />
             <PasswordField onChangeText={setPassword} />
 
-            {/* forgot password link */}
             <TouchableOpacity
               onPress={() => router.navigate("/forgotpassword")}
               style={{ alignSelf: "flex-end", marginBottom: 10 }}

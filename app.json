@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "BeaconMind",
-    "slug": "beaconmind.students",
+    "name": "BeaconMind Students",
+    "slug": "beaconmindstudents",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
@@ -9,11 +9,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.beaconmind.students",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.beaconmind.students"
@@ -21,14 +25,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -44,8 +48,15 @@
         "origin": false
       },
       "eas": {
-        "projectId": "761a0962-cdf6-4d0f-8717-17f7c9ff7f8a"
+        "projectId": "0d534c60-4c73-4413-ad4c-c0253bd72fc6"
       }
+    },
+    "owner": "atharvnaik.it",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0d534c60-4c73-4413-ad4c-c0253bd72fc6"
     }
   }
 }

@@ -29,7 +29,7 @@ const Chat = () => {
   if (!apiContext) {
     throw new Error("Chat must be used within an ApiProvider");
   }
-  const { chatUrl, authUrl, token, setToken, setIsLoggedIn, loading, setLoading } =
+  const { chatUrl, authUrl, token, setToken, setIsLoggedIn, loading, setLoading, setStatus } =
     apiContext;
 
   interface Message {
@@ -139,14 +139,16 @@ const Chat = () => {
   }
 
 
-  const handleActionsFlag = (flag) => {
+  const handleActionsFlag = (flag: string) => {
     if (flag === "end_session") {
-      setActionButtonVisible(true);
+      // setActionButtonVisible(true);
       // disable input
-      setAllowInput(false);
+      // setAllowInput(false);
+      setStatus('assessment');
+      router.replace("/assessment");
     }
     if (flag === "init_session") {
-      setActionButtonVisible(false);
+      // setActionButtonVisible(false);
       // enable input
       setAllowInput(true);
     }
@@ -155,8 +157,6 @@ const Chat = () => {
 
   const sendMessage = async (resendLastMsg = false) => {
     // if resendLastMsg is true, resend the last message in the chat. extract the last user message from the chat history
-
-    console.log("allowSend", allowSend, 159)
 
     if (!allowSend) return;
 
@@ -265,7 +265,7 @@ const Chat = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.container}>
 
-        <SlideDownButton isVisible={isActionButtonVisible} onPress={() => handleActionsFlag("")} />
+        {/* <SlideDownButton isVisible={isActionButtonVisible} onPress={() => handleActionsFlag("")} /> */}
 
         <ImageBackground
           source={require("@/assets/images/chat/bg-light.jpg")}
@@ -276,7 +276,7 @@ const Chat = () => {
             source={require("@/assets/images/chat/profile.png")}
             style={styles.profilePic}
           />
-          <Text style={styles.headerTitle}>Beacon AI</Text>
+          <Text style={styles.headerTitle}>BeaconMind</Text>
           <TouchableOpacity style={styles.moreBtn}>
             <MoreButton
               options={[
@@ -372,19 +372,6 @@ const Chat = () => {
                       : styles.serverMessage,
                   ]}
                 >
-                  {/* {item.sender === "server" && item.text === "..." ? (
-              <TypingAnimation />
-            ) : (
-              <Text
-                style={
-                  item.sender === "user"
-                    ? styles.userMsgText
-                    : styles.serverMsgText
-                }
-              >
-                {item.text}
-              </Text>
-            )} */}
                   {item.sender === "server" && item.text === "..." ? (
                     <TypingAnimation />
                   ) : item.sender === "user" ? (
@@ -416,7 +403,7 @@ const Chat = () => {
           }}
         />
 
-        {/* <View 
+        <View 
           style={{
             ...styles.inputContainer,
             opacity: allowInput ? 1 : 0,
@@ -445,16 +432,16 @@ const Chat = () => {
               <MaterialIcons name="stop" size={20} color="#eee" />
             </TouchableOpacity>
           )}
-        </View> */}
+        </View>
 
-        <ChatInput
+        {/* <ChatInput
           allowInput={allowInput}
           focusInput={focusChatInput}
           inputText={inputText}
           setInputText={setInputText}
           onPress={sendMessage}
           isWaitingForResponse={isWaitingForResponse}
-        />
+        /> */}
         
       </View>
     </SafeAreaView>

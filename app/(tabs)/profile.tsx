@@ -83,7 +83,7 @@ const Profile = () => {
     throw new Error("Login must be used within an ApiProvider");
   }
 
-  const { user, setUser, token, setLoading, setIsLoggedIn, setToken, authUrl } =
+  const { user, setUser, token, setLoading, setIsLoggedIn, setToken, authUrl, setIsProfileSetup } =
     apiContext;
 
   type UserInfoKey = keyof typeof user;
@@ -146,24 +146,29 @@ const Profile = () => {
     const url = `${authUrl}logout/`;
     try {
       setLoading(true);
+  
       const response = await fetch(url, {
         method: "POST",
         headers: { Authorization: `Token ${token}` },
       });
+  
       if (response.ok) {
         console.log("Logged out successfully from backend.");
       }
-    } catch {
-      console.log("Error logging out from backend. Logged out locally.");
+    } catch (err) {
+      console.error("Logout error:", err);
+      console.log("Error logging out from backend. Logging out locally.");
     } finally {
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("isLoggedIn");
+      await AsyncStorage.multiRemove(["token", "isLoggedIn"]);
       setIsLoggedIn(false);
       setToken("");
-      router.replace("/login");
+      setUser({}); // ✅ clear context user
+      setIsProfileSetup(false); // ✅ reset onboarding flag
       setLoading(false);
+      router.replace("/login");
     }
   };
+  
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

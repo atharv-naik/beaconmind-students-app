@@ -12,7 +12,7 @@ const AuthLayout = () => {
 
   const { loading, isLoggedIn } = apiContext;
 
-  if (!loading && isLoggedIn) return <Redirect href="/(tabs)/home" />;
+  // if (!loading && isLoggedIn) return <Redirect href="/(tabs)/home" />;
 
   return (
     <>

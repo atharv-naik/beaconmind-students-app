@@ -1,48 +1,45 @@
 import { Text } from "react-native";
-import { Link, Redirect } from "expo-router";
+import { Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ApiContext } from "@/context/ApiContext";
 import { useContext } from "react";
-
+import Loader from "@/components/Loader";
 
 export default function Index() {
-
   const apiContext = useContext(ApiContext);
   if (!apiContext) return null;
 
-  const { loading, isLoggedIn } = apiContext;
+  const { loading, isLoggedIn, user, isProfileSetup } = apiContext;
 
-  if (!loading && isLoggedIn) return <Redirect href="/(tabs)/home" />;
+  const userIsLoaded = !!user && Object.keys(user).length > 0;
 
-  // if (!loading && !isLoggedIn) return <Redirect href="/login" />;
-  if (!loading && !isLoggedIn) return <Redirect href="/assessment" />;
+  console.log("Index.tsx:10 - ", { loading, isLoggedIn, user, isProfileSetup, userIsLoaded });
 
+  if (loading || (isLoggedIn && !userIsLoaded)) {
+    return (
+      <SafeAreaView
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ fontSize: 30, fontWeight: "bold" }}>Loading...</Text>
+        <Loader loading={true} />
+      </SafeAreaView>
+    );
+  }
 
-  return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      {/* <Text>BeaconMind</Text>
-      <Link href="/login" style={{ marginTop: 20, color: "blue" }}>
-        Login
-      </Link>
-      <Link href="/register" style={{ color: "blue" }}>
-        Register
-      </Link>
-      <Link href="/home" style={{ color: "blue" }}>
-        Home
-      </Link>
-      <Link href="/chat" style={{ color: "blue" }}>
-        Chat
-      </Link> */}
+  if (isLoggedIn && user?.role === "student" && !isProfileSetup) {
+    console.log("Redirecting to profile setup");
+    return <Redirect href="/profile-setup" />;
+  }
 
-      <Text style={{ fontFamily: "Playwrite_DE_LA", fontSize: 30 }}>
-        BeaconMind
-      </Text>
-    </SafeAreaView>
-  );
+  if (isLoggedIn) {
+    console.log("Redirecting to home", { user, isProfileSetup });
+    return <Redirect href="/(tabs)/home" />;
+  }
+
+  console.log("Redirecting to login");
+  return <Redirect href="/login" />;
 }
