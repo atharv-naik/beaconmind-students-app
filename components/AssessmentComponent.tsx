@@ -487,7 +487,7 @@ const AssessmentComponent = ({
               Form assessments
             </Text>
             <Text style={{ fontSize: 18, color: "#666", padding: 10 }}>
-              Please complete the next {assessments.length} assessments before exiting
+              Please complete the next {assessments.length} Form Assessments before exiting
             </Text>
             <TouchableOpacity
               onPress={() => setNextAssessmentPopup(false)}

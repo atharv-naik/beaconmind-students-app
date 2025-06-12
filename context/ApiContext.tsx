@@ -75,6 +75,10 @@ export const ApiProvider = ({ children }: { children: ReactNode }) => {
         setAuthUrl(constructedAuthUrl);
         setChatUrl(constructedChatUrl);
 
+        // Load saved status from AsyncStorage
+        const savedStatus = await AsyncStorage.getItem('status');
+        if (savedStatus) setStatus(savedStatus);
+
         // Step 3: Load login state and token
         const storedToken = await AsyncStorage.getItem('token');
         const storedLoggedIn = await AsyncStorage.getItem('isLoggedIn');
@@ -115,6 +119,15 @@ export const ApiProvider = ({ children }: { children: ReactNode }) => {
 
     initialize();
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      console.log('status changed:', status);
+      AsyncStorage.setItem('status', status).catch((err) =>
+        console.error('Failed to save status to storage', err)
+      );
+    }
+  }, [status]);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
