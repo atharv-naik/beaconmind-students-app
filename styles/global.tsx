@@ -354,7 +354,7 @@ export const authStyles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
-    marginBottom: 15,
+    marginTop: 15,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderColor: '#ccc',
@@ -395,7 +395,7 @@ export const authStyles = StyleSheet.create({
   errorText: {
     fontSize: 14,
     marginBottom: 5,
-    color: 'red',
+    color: '#cc4c4c',
     fontWeight: 'bold',
   },
   authLinkWrapper: {

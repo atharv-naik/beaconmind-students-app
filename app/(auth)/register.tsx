@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { authStyles as styles, styles as baseStyles, markdownStyles } from "@/styles/global";
+import { Picker } from '@react-native-picker/picker';
 import { MaterialIcons } from "@expo/vector-icons";
 import { ApiContext } from "@/context/ApiContext";
 import Markdown from "react-native-markdown-display";
@@ -26,6 +27,8 @@ const Register = () => {
 
   const [formData, setFormData] = useState({
     username: "",
+    age: "",
+    gender: "",
     email: "",
     phone: "",
     address: "",
@@ -35,6 +38,9 @@ const Register = () => {
 
   const [emailValidationError, setEmailValidationError] = useState("");
   const [passwordValidationError, setPasswordValidationError] = useState("");
+  const [usernameValidationError, setUsernameValidationError] = useState("");
+  const [phoneValidationError, setPhoneValidationError] = useState("");
+  const [ageValidationError, setAgeValidationError] = useState("");
   const [passwordMatchError, setPasswordMatchError] = useState("");
   const [passwordStrength, setPasswordStrength] = useState("");
   const [showDisclaimer, setShowDisclaimer] = useState(false);
@@ -87,6 +93,43 @@ const Register = () => {
 
     if (field === "password2") {
       untilMatch(formData.password1, value);
+    }
+
+    if (field === "username") {
+      // no space
+      if (value.includes(" ")) {
+        setUsernameValidationError("Username cannot contain spaces.");
+      } else {
+        setUsernameValidationError("");
+      }
+    }
+
+    if (field === "phone") {
+      if (value.length === 0) {
+        setPhoneValidationError("");
+      } else {
+        const phoneRegex = /^(?:\+91[\-\s]?|0)?[6-9]\d{9}$/;
+        if (!phoneRegex.test(value)) {
+          setPhoneValidationError("Not a valid Indian number.");
+        } else {
+          setPhoneValidationError("");
+        }
+      }
+    }
+
+
+    if (field === "age") {
+      // between 18 and 150
+      const ageValue = parseInt(value, 10);
+      if (ageValue < 18 || ageValue > 150) {
+        setAgeValidationError("Age must be between 18 and 150.");
+      } else {
+        setAgeValidationError("");
+      }
+    }
+
+    if (field === "gender") {
+      // You can add gender validation here if needed
     }
   };
 
@@ -158,6 +201,7 @@ const Register = () => {
         Alert.alert("Error", "Registration failed.");
       }
     } catch (error) {
+      console.error("Registration error:", error, authUrl);
       Alert.alert("Error", "Error registering.");
     } finally {
       setLoading(false);
@@ -194,12 +238,6 @@ const Register = () => {
     <TouchableOpacity style={styles.authButton} onPress={showDisclaimerPopup}>
       <Text style={styles.authBtnText}>Register</Text>
     </TouchableOpacity>
-  );
-
-  const LoadingOverlay = () => (
-    <View style={styles.loadingOverlay}>
-      <ActivityIndicator size="large" color="#fff" />
-    </View>
   );
 
   return (
@@ -241,7 +279,7 @@ const Register = () => {
         <View style={styles.authContainer}>
             <Text style={styles.authTitle}>Register</Text>
           <View style={styles.authForm}>
-            <View style={styles.inputWrapper}>
+            <View style={{...styles.inputWrapper, marginTop: 0}}>
               <MaterialIcons
                 name="person"
                 size={20}
@@ -255,6 +293,10 @@ const Register = () => {
                 onChangeText={(value) => handleInputChange("username", value)}
               />
             </View>
+            {usernameValidationError ? (
+              <Text style={styles.errorText}>{usernameValidationError}</Text>
+            ) : null}
+
             <View style={styles.inputWrapper}>
               <MaterialIcons
                 name="email"
@@ -273,6 +315,7 @@ const Register = () => {
             {emailValidationError ? (
               <Text style={styles.errorText}>{emailValidationError}</Text>
             ) : null}
+
             <View style={styles.inputWrapper}>
               <MaterialIcons
                 name="phone"
@@ -288,22 +331,58 @@ const Register = () => {
                 onChangeText={(value) => handleInputChange("phone", value)}
               />
             </View>
-            {/* <View style={styles.inputWrapper}>
-              <MaterialIcons
-                name="home"
-                size={20}
-                color={styles.inputIcon.color}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={[styles.input, { height: 100 }]}
-                placeholder="Address (optional)"
-                placeholderTextColor={styles.inputPlaceholder.color}
-                numberOfLines={3}
-                multiline
-                onChangeText={(value) => handleInputChange("address", value)}
-              />
-            </View> */}
+            {phoneValidationError ? (
+              <Text style={styles.errorText}>{phoneValidationError}</Text>
+            ) : null}
+
+            {/* age and gender */}
+            {/* in one line */}
+            <View style={{ flexDirection: "row", gap: 10 }}>
+
+              {/* Age */}
+              <View style={{...styles.inputWrapper, flex: 1}}>
+                <MaterialIcons
+                  name="cake"
+                  size={20}
+                  color={styles.inputIcon.color}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Age"
+                  placeholderTextColor={styles.inputPlaceholder.color}
+                  keyboardType="numeric"
+                  onChangeText={(value) => handleInputChange("age", value)}
+                />
+              </View>
+
+              {/* Gender */}
+              <View style={{...styles.inputWrapper, flex: 2}}>
+                <MaterialIcons
+                  name="wc"
+                  size={20}
+                  color={styles.inputIcon.color}
+                  style={styles.inputIcon}
+                />
+                <View style={[styles.input, { paddingVertical: 0 }]}>
+                  <Picker
+                    selectedValue={formData.gender}
+                    onValueChange={(value) => handleInputChange('gender', value)}
+                    dropdownIconColor={styles.inputIcon.color}
+                    style={{ color: styles.inputPlaceholder.color, padding: 0, margin: 0 }}
+                  >
+                    <Picker.Item label="Gender" value="" />
+                    <Picker.Item label="Male" value="male" />
+                    <Picker.Item label="Female" value="female" />
+                    <Picker.Item label="Other" value="other" />
+                  </Picker>
+                </View>
+              </View>
+            </View>
+            {ageValidationError ? (
+                <Text style={styles.errorText}>{ageValidationError}</Text>
+            ) : null}
+
             <View style={styles.inputWrapper}>
               <MaterialIcons
                 name="lock"
@@ -345,8 +424,9 @@ const Register = () => {
             {passwordMatchError ? (
               <Text style={styles.errorText}>{passwordMatchError}</Text>
             ) : null}
-
-            <RegisterBtn />
+            <View style={{marginTop: 10}}>
+              <RegisterBtn />
+            </View>
           </View>
         </View>
         <LoginLink />
