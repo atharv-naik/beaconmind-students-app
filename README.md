@@ -1,50 +1,52 @@
-# Welcome to your Expo app 👋
+# BeaconMind Students Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native mobile application built with Expo that enables doctors to assess students for suicide risk, substance abuse, and other mental health concerns.
 
-## Get started
+## Overview
+BeaconMind Students is a comprehensive assessment platform providing structured questionnaires for mental health screening, including:
+- **ASQ Assessment**: Anxiety and stress screening questionnaire
+- **Substance Use Assessment**: Evaluates levels of substance use and dependence
+- **MARS Assessment**: Mobile App Rating Scale for evaluating app quality
 
-1. Install dependencies
+The app features a dynamic assessment engine capable of handling various question types:
+- Multiple-choice questions (MCQ)
+- Multiple-select questions (MSQ)
+- Text input responses
+- Star rating responses
 
-   ```bash
-   npm install
-   ```
+## Getting Started
+### Prerequisites
+- Node.js (v14 or higher)
+- npm or yarn
+- Expo CLI
 
-2. Start the app
+### Installation
+1. Clone the repository: `git clone <repository-url> && cd beaconmind.students`
+2. Install dependencies: `npm install`
+3. Start the development server: `npx expo start`
 
-   ```bash
-    npx expo start
-   ```
+## App Structure
+- **`/app`**: Main application screens using file-based routing
+- **`/components`**: Reusable UI components including `AssessmentComponent.tsx`
+- **`/assessmentstore`**: Assessment data and question definitions
+- **`/context`**: Application-wide state management
 
-In the output, you'll find options to open the app in a
+## Key Features
+- **Dynamic Question Flow**: Supports conditional branching based on user responses
+- **Multiple Question Types**: MCQ, MSQ, text input, and star ratings
+- **Progress Tracking**: Visual indication of assessment completion
+- **Response Submission**: Secure submission of assessment data to backend
+- **Authentication**: User authentication and profile management
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Usage
+After signing in, users can: (1) Access assessments from the home screen, (2) Complete questionnaires with different response types, (3) Navigate through questions, and (4) Submit responses securely to the backend system.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Privacy and Consent
+The app includes comprehensive informed consent documentation to ensure users understand how their data will be used in accordance with ethical research standards.
 
-## Get a fresh project
+## Development
+This project is built with: React Native/Expo, React Navigation, Context API for state management, and Async Storage for local data persistence.
 
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Learn More
+- [Expo documentation](https://docs.expo.dev/)
+- [React Native documentation](https://reactnative.dev/docs/getting-started)
